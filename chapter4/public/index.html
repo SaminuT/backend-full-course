@@ -10,27 +10,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
         integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <style>
-        .logout-btn {
-            background-color: #ff4d4f;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            margin-left: auto;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .logout-btn:hover {
-            background-color: #ff7875;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-    </style>
 </head>
 
 <body>
@@ -52,31 +31,29 @@
             <button onclick="toggleIsRegister()" id="registerBtn">Sign up</button>
         </div>
     </section>
-
     <header style="display: none;">
         <h1 class="text-gradient">You have 0 open tasks.</h1>
-        <button onclick="logout()" class="logout-btn">Logout</button>
     </header>
-
     <nav style="display: none;" class="tab-container">
-        <button onclick="changeTab('All')" class="tab-button selected-tab">
+        <button onclick="changeTab('All')" class="tab-button  selected-tab">
             <h4>All <span>(0)</span></h4>
         </button>
-        <button onclick="changeTab('Open')" class="tab-button">
+        <button onclick="changeTab('Open')" class="tab-button  ">
             <h4>Open <span>(0)</span></h4>
         </button>
-        <button onclick="changeTab('Complete')" class="tab-button">
+        <button onclick="changeTab('Complete')" class="tab-button  ">
             <h4>Complete <span>(0)</span></h4>
         </button>
         <hr />
     </nav>
+    <main style="display: none;">
 
-    <main style="display: none;"></main>
 
+    </main>
 </body>
-
 <script>
     let token = localStorage.getItem('token')
+
     let isLoading = false
     let isAuthenticating = false
     let isRegistration = false
@@ -85,6 +62,7 @@
 
     const apiBase = '/'
 
+    // elements
     const nav = document.querySelector('nav')
     const header = document.querySelector('header')
     const main = document.querySelector('main')
@@ -95,28 +73,43 @@
     const password = document.getElementById('passwordInput')
     const registerBtn = document.getElementById('registerBtn')
     const authBtn = document.getElementById('authBtn')
+    const addTodoBtn = document.getElementById('addTodoBtn')
+    // const deleteBtn = document.getElementById('')
+    // const updateBtn = 
 
+    // PAGE RENDERING LOGIC
     async function showDashboard() {
         nav.style.display = 'block'
         header.style.display = 'flex'
         main.style.display = 'flex'
         authContent.style.display = 'none'
+
         await fetchTodos()
     }
 
     function updateHeaderText() {
         const todosLength = todos.length
-        const newString = todosLength === 1 ? `You have 1 open task.` : `You have ${todosLength} open tasks.`
+        const newString = todos.length === 1 ?
+            `You have 1 open task.` :
+            `You have ${todosLength} open tasks.`
         header.querySelector('h1').innerText = newString
     }
 
     function updateNavCount() {
         navElements.forEach(ele => {
             const btnText = ele.innerText.split(' ')[0]
+
+            // filter todos in here
             const count = todos.filter(val => {
-                if (btnText === 'All') return true
-                return btnText === 'Complete' ? val.completed : !val.completed
+                if (btnText === 'All') {
+                    return true
+                }
+                return btnText === 'Complete' ?
+                    val.completed :
+                    !val.completed
             }).length
+
+            // target inside space and update value
             ele.querySelector('span').innerText = `(${count})`
         })
     }
@@ -134,13 +127,15 @@
     }
 
     function renderTodos() {
+        // need to add filtering logic in here
+
         updateNavCount()
         updateHeaderText()
-        let todoList = ``
 
+        let todoList = ``
         todos.filter(val => {
             return selectedTab === 'All' ? true : selectedTab === 'Complete' ? val.completed : !val.completed
-        }).forEach(todo => {
+        }).forEach((todo, todoIndex) => {
             const taskIndex = todo.id
             todoList += `
             <div class="card todo-item">
@@ -156,7 +151,6 @@
             </div>
             `
         })
-
         todoList += `
         <div class="input-container">
             <input id="todoInput" placeholder="Add task" />
@@ -165,9 +159,12 @@
             </button>
         </div>
         `
-
         main.innerHTML = todoList
     }
+
+    // showDashboard()
+
+    // AUTH LOGIC
 
     async function toggleIsRegister() {
         isRegistration = !isRegistration
@@ -178,30 +175,56 @@
     }
 
     async function authenticate() {
+        // access email and pass values
         const emailVal = email.value
         const passVal = password.value
 
-        if (isLoading || isAuthenticating || !emailVal || !passVal || passVal.length < 6 || !emailVal.includes('@')) return
+        // guard clauses... if authenticating, return
+        if (
+            isLoading ||
+            isAuthenticating ||
+            !emailVal ||
+            !passVal ||
+            passVal.length < 6 ||
+            !emailVal.includes('@')
+        ) { return }
 
+        // reset error and set isAuthenticating to true
         error.style.display = 'none'
         isAuthenticating = true
         authBtn.innerText = 'Authenticating...'
 
         try {
             let data
-            const url = isRegistration ? 'auth/register' : 'auth/login'
-            const response = await fetch(apiBase + url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: emailVal, password: passVal })
-            })
-            data = await response.json()
+            if (isRegistration) {
+                // register an account
+                const response = await fetch(apiBase + 'auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: emailVal, password: passVal })
+                })
+                data = await response.json()
+            } else {
+                // login an account
+                const response = await fetch(apiBase + 'auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: emailVal, password: passVal })
+                })
+                data = await response.json()
+            }
 
             if (data.token) {
                 token = data.token
                 localStorage.setItem('token', token)
+
+                // authenicating into loading
                 authBtn.innerText = 'Loading...'
+
+                // fetch todos
                 await fetchTodos()
+
+                // show dashboard
                 showDashboard()
             } else {
                 throw Error('❌ Failed to authenticate...')
@@ -215,26 +238,15 @@
             authBtn.innerText = 'Submit'
             isAuthenticating = false
         }
+
+
     }
 
     function logout() {
-        localStorage.removeItem('token')
-        token = null
-        todos = []
-        email.value = ''
-        password.value = ''
-
-        nav.style.display = 'none'
-        header.style.display = 'none'
-        main.style.display = 'none'
-        authContent.style.display = 'flex'
-
-        isRegistration = false
-        registerBtn.innerText = 'Sign up'
-        document.querySelector('#auth > div h2').innerText = 'Login'
-        document.querySelector('.register-content p').innerText = 'Don\'t have an account?'
-        document.querySelector('.register-content button').innerText = 'Sign up'
+        // wipe states and clear cached token
     }
+
+    // CRUD LOGIC
 
     async function fetchTodos() {
         isLoading = true
@@ -248,7 +260,8 @@
     }
 
     async function updateTodo(index) {
-        await fetch(apiBase + 'todos/' + index, {
+        // set task complete status to true
+        await fetch(apiBase + 'todos' + '/' + index, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -260,17 +273,22 @@
     }
 
     async function deleteTodo(index) {
-        await fetch(apiBase + 'todos/' + index, {
+        // set task complete status to true
+        await fetch(apiBase + 'todos' + '/' + index, {
             method: 'DELETE',
-            headers: { 'Authorization': token },
+            headers: {
+                'Authorization': token
+            },
         })
         fetchTodos()
     }
 
     async function addTodo() {
+        // have to access this val later as it's rendered with js
         const todoInput = document.getElementById('todoInput')
         const task = todoInput.value
-        if (!task) return
+
+        if (!task) { return }
 
         await fetch(apiBase + 'todos', {
             method: 'POST',
@@ -284,6 +302,14 @@
         fetchTodos()
     }
 
+    // UTILITY FUNCTIONS
+
+
+    // load page and read local storage for key
+
+    // default to login screen
+
+    // if is authenticated, show todo app
     if (token) {
         async function run() {
             await fetchTodos()

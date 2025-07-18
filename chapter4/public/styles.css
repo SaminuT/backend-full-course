@@ -150,20 +150,6 @@ hr {
     max-width: unset !important;
 }
 
-.logout-btn {
-    background-color: #ff4d4f;
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    margin-left: auto;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.logout-btn:hover {
-    background-color: #ff7875;
-}
-
 @keyframes widen {
     from {
         width: 20%;
